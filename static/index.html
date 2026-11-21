@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClipSave — Free, Ad-Free Video Downloader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --surface-alt: #fafaf9;
+      --text-main: #18181b;
+      --text-muted: #52525b;
+      --border: #e4e4e7;
+      --accent: #18181b;
+      --accent-hover: #27272a;
+      --green: #16a34a;
+      --green-bg: #dcfce7;
+      --blue: #2563eb;
+      --blue-bg: #eff6ff;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 16px 40px 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .offline-banner {
+      display: none;
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto 16px auto;
+      background: var(--danger-bg);
+      border: 1px solid #fca5a5;
+      color: var(--danger);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .offline-banner code {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(220, 38, 38, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+
+    header {
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto 28px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.03em;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--text-main);
+      color: #fff;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .free-badge {
+      background: var(--blue-bg);
+      color: var(--blue);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #bfdbfe;
+    }
+
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--green);
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .pulse-dot::after {
+      content: "";
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background-color: var(--green);
+      opacity: 0.4;
+      animation: pulse 1.8s infinite ease-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.8); opacity: 0.6; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+
+    main {
+      max-width: 960px;
+      width: 100%;
+      margin: 0 auto;
+      flex: 1;
+    }
+
+    .hero {
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 28px auto;
+    }
+
+    .friendly-tag {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+      border: 1px solid #fde68a;
+    }
+
+    .hero h1 {
+      font-size: 2.1rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 0.98rem;
+      line-height: 1.6;
+    }
+
+    .queue-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .queue-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .add-task-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1.5px solid var(--text-main);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .add-task-btn:hover {
+      background: var(--text-main);
+      color: #fff;
+    }
+
+    .tasks-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .task-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+      animation: slideUp 0.25s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .task-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .task-badge-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .task-label {
+      font-size: 0.82rem;
+      font-weight: 800;
+      background: var(--bg);
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: var(--text-main);
+    }
+
+    .detected-platform {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--bg);
+    }
+
+    .remove-task-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .remove-task-btn:hover {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 6px;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: var(--text-main);
+      background: var(--surface);
+    }
+
+    .input-wrapper input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: var(--text-main);
+      outline: none;
+      min-width: 0;
+    }
+
+    .paste-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 6px;
+      font-family: inherit;
+    }
+
+    .paste-btn:hover { background: #f4f4f5; }
+
+    .fetch-btn {
+      background: var(--accent);
+      color: #ffffff;
+      border: none;
+      padding: 11px 20px;
+      border-radius: 9px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .fetch-btn:hover:not(:disabled) { background: var(--accent-hover); }
+    .fetch-btn:disabled { opacity: 0.65; cursor: not-allowed; }
+
+    .spinner {
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .task-error {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: var(--danger-bg);
+      color: var(--danger);
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      font-weight: 500;
+    }
+
+    .split-result {
+      display: none;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .video-details-side {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .video-details-side img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      background: var(--bg);
+    }
+
+    .source-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 5px;
+      background: var(--bg);
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .video-details-side h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.4;
+      color: var(--text-main);
+    }
+
+    .downloads-side {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .downloads-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    .format-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      gap: 12px;
+    }
+
+    .dl-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-bg);
+      color: var(--green);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .dl-action-btn:hover:not(:disabled) {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .dl-action-btn:disabled {
+      opacity: 0.7;
+      cursor: wait;
+    }
+
+    .progress-box {
+      display: none;
+      margin-top: 12px;
+      background: var(--blue-bg);
+      border: 1px solid #bfdbfe;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .progress-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 8px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: #dbeafe;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar-animated {
+      height: 100%;
+      width: 45%;
+      background: linear-gradient(90deg, #2563eb, #3b82f6, #60a5fa);
+      border-radius: 999px;
+      animation: indeterminate 1.4s infinite ease-in-out;
+    }
+
+    @keyframes indeterminate {
+      0% { transform: translateX(-100%); width: 45%; }
+      50% { width: 65%; }
+      100% { transform: translateX(230%); width: 45%; }
+    }
+
+    .fun-fact {
+      font-size: 0.83rem;
+      color: #1e3a8a;
+      line-height: 1.45;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    /* Download Completion Report */
+    .report-box {
+      display: none;
+      margin-top: 12px;
+      background: var(--green-bg);
+      border: 1px solid #86efac;
+      border-radius: 12px;
+      padding: 14px 16px;
+      animation: slideUp 0.25s ease-out;
+    }
+
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: #15803d;
+      margin-bottom: 10px;
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.78);
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+
+    .report-stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .report-stat-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .report-stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 2px;
+    }
+
+    .about-grid {
+      margin-top: 36px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .about-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .about-card h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .about-card p {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    footer {
+      max-width: 960px;
+      width: 100%;
+      margin: 36px auto 0 auto;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 720px) {
+      .hero h1 { font-size: 1.65rem; }
+      .split-result { grid-template-columns: 1fr; }
+      .about-grid { grid-template-columns: 1fr; }
+      .report-grid { grid-template-columns: 1fr; }
+      .input-wrapper { flex-wrap: wrap; }
+      .input-wrapper input { width: 100%; }
+      .fetch-btn { flex: 1; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="offlineBanner" class="offline-banner">
+    <span>⚠️</span>
+    <div>
+      <strong>No Internet Connection:</strong> Cannot reach video servers right now.
+      <code>ERR_INTERNET_DISCONNECTED</code> — Check your Wi-Fi or mobile data to resume downloads.
+    </div>
+  </div>
+
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </div>
+      <span>ClipSave</span>
+    </div>
+
+    <div class="header-right">
+      <span class="free-badge">100% Free &bull; Zero Ads</span>
+      <div class="live-pill" title="Real-time users active right now">
+        <span class="pulse-dot"></span>
+        <span><strong id="visitorCount">1</strong> live online</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="friendly-tag">👋 Ra mama! Ochi free ga videos download chesuko — No ads!</div>
+      <h1>Save HD videos in one click.</h1>
+      <p>
+        Paste any link from YouTube, Instagram, or X (Twitter). Queue multiple links at once,
+        pick your resolution, and save clean MP4 files directly to your phone or laptop.
+      </p>
+    </div>
+
+    <div class="queue-toolbar">
+      <span class="queue-title">Download Queue</span>
+      <button type="button" class="add-task-btn" onclick="addTask()">
+        <span>+</span> Add Another Link (Task)
+      </button>
+    </div>
+
+    <div id="tasksContainer" class="tasks-container"></div>
+
+    <section class="about-grid">
+      <div class="about-card">
+        <h4>⚡ Zero Ads, Zero Popups</h4>
+        <p>Built as a clean, distraction-free utility. No fake download buttons, no redirects, and no sign-ups required.</p>
+      </div>
+      <div class="about-card">
+        <h4>🎬 True 1080p HD Merging</h4>
+        <p>Automatically combines high-bitrate video and audio streams on the fly so your downloads stay sharp with full sound.</p>
+      </div>
+      <div class="about-card">
+        <h4>📑 Multi-Link Queue</h4>
+        <p>Have 3 or 4 links copied? Add extra tasks side-by-side and download them in parallel without waiting.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    ClipSave &bull; Free personal media backup utility for desktop & mobile.
+  </footer>
+
+  <script>
+    let taskCounter = 0;
+
+    const waitingFacts = [
+      "💡 Did you know? 1080p YouTube videos store video and audio separately—ClipSave is merging them for you right now!",
+      "⚡ Fun Fact: 1 minute of uncompressed 1080p video would take over 10 GB—MP4 (H.264) compresses it by 99% without losing sharpness.",
+      "📱 Tip: You can click '+ Add Another Link' above to queue multiple videos at the exact same time!",
+      "🎬 Did you know? The very first video uploaded to YouTube ('Me at the zoo') was just 19 seconds long at 240p resolution.",
+      "🚀 Zero-Disk Streaming: Your video is streamed directly to your browser without cluttering cloud servers."
+    ];
+
+    function formatDuration(ms) {
+      const totalSeconds = ms / 1000;
+      if (totalSeconds < 60) {
+        return `${totalSeconds.toFixed(1)}s`;
+      }
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = Math.round(totalSeconds % 60);
+      return `${mins}m ${secs}s`;
+    }
+
+    function connectVisitorSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/visitors`);
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (typeof data.live_visitors === 'number') {
+            document.getElementById('visitorCount').textContent = data.live_visitors;
+          }
+        } catch (e) {}
+      };
+
+      ws.onclose = () => setTimeout(connectVisitorSocket, 3000);
+    }
+    connectVisitorSocket();
+
+    function updateOnlineStatus() {
+      const banner = document.getElementById('offlineBanner');
+      banner.style.display = navigator.onLine ? 'none' : 'flex';
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    function detectPlatformFromUrl(url) {
+      const lower = url.toLowerCase();
+      if (lower.includes('youtube.com') || lower.includes('youtu.be')) {
+        return { name: 'YouTube Video', icon: '▶️', color: '#dc2626', bg: '#fef2f2' };
+      }
+      if (lower.includes('instagram.com')) {
+        return { name: 'Instagram Reel / Post', icon: '📸', color: '#db2777', bg: '#fdf2f8' };
+      }
+      if (lower.includes('twitter.com') || lower.includes('x.com')) {
+        return { name: 'X (Twitter) Video', icon: '𝕏', color: '#0f172a', bg: '#f1f5f9' };
+      }
+      if (lower.startsWith('http')) {
+        return { name: 'Web Media Link', icon: '🌐', color: '#2563eb', bg: '#eff6ff' };
+      }
+      return null;
+    }
+
+    function handleUrlInput(taskId) {
+      const input = document.getElementById(`input-${taskId}`);
+      const badge = document.getElementById(`detected-${taskId}`);
+      const info = detectPlatformFromUrl(input.value.trim());
+
+      if (info) {
+        badge.style.display = 'inline-flex';
+        badge.style.color = info.color;
+        badge.style.background = info.bg;
+        badge.textContent = `${info.icon} Detected: ${info.name}`;
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function addTask() {
+      taskCounter++;
+      const id = taskCounter;
+      const container = document.getElementById('tasksContainer');
+
+      const card = document.createElement('div');
+      card.className = 'task-card';
+      card.id = `task-card-${id}`;
+      card.innerHTML = `
+        <div class="task-header">
+          <div class="task-badge-group">
+            <span class="task-label">Task #${id}</span>
+            <span id="detected-${id}" class="detected-platform"></span>
+          </div>
+          ${id > 1 ? `<button type="button" class="remove-task-btn" onclick="removeTask(${id})">✕ Remove</button>` : ''}
+        </div>
+
+        <div class="input-wrapper">
+          <input
+            type="url"
+            id="input-${id}"
+            placeholder="Paste YouTube, Instagram, or X link here..."
+            oninput="handleUrlInput(${id})"
+            onkeydown="if(event.key==='Enter') fetchTaskVideo(${id})"
+            autocomplete="off"
+          />
+          <button type="button" class="paste-btn" onclick="pasteToTask(${id})">Paste</button>
+          <button type="button" class="fetch-btn" id="fetch-btn-${id}" onclick="fetchTaskVideo(${id})">
+            <span class="spinner" id="spinner-${id}"></span>
+            <span id="btn-text-${id}">Get Video</span>
+          </button>
+        </div>
+
+        <div id="error-${id}" class="task-error"></div>
+
+        <div id="result-${id}" class="split-result">
+          <div class="video-details-side">
+            <img id="thumb-${id}" src="" alt="Thumbnail" />
+            <span class="source-tag" id="platform-${id}">SOURCE</span>
+            <h3 id="title-${id}">Video Title</h3>
+          </div>
+
+          <div class="downloads-side">
+            <div class="downloads-title">Select Quality to Download</div>
+            <div id="formats-${id}"></div>
+
+            <div id="progress-${id}" class="progress-box">
+              <div class="progress-top">
+                <span id="progress-status-${id}">Preparing & merging HD video...</span>
+                <span>Please wait</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-bar-animated"></div>
+              </div>
+              <div class="fun-fact" id="fact-${id}"></div>
+            </div>
+
+            <div id="report-${id}" class="report-box"></div>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(card);
+      if (id > 1) document.getElementById(`input-${id}`).focus();
+    }
+
+    function removeTask(id) {
+      const el = document.getElementById(`task-card-${id}`);
+      if (el) el.remove();
+    }
+
+    async function pasteToTask(id) {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          const input = document.getElementById(`input-${id}`);
+          input.value = text.trim();
+          handleUrlInput(id);
+        }
+      } catch (err) {
+        showTaskError(id, 'Clipboard permission blocked by browser. Paste manually with Ctrl+V / Cmd+V.');
+      }
+    }
+
+    function showTaskError(id, msg) {
+      const box = document.getElementById(`error-${id}`);
+      box.textContent = msg;
+      box.style.display = 'block';
+    }
+
+    async function fetchTaskVideo(id) {
+      if (!navigator.onLine) {
+        showTaskError(id, 'ERR_INTERNET_DISCONNECTED: You are offline. Connect to the internet and try again.');
+        return;
+      }
+
+      const input = document.getElementById(`input-${id}`);
+      const url = input.value.trim();
+      if (!url) {
+        input.focus();
+        return;
+      }
+
+      const btn = document.getElementById(`fetch-btn-${id}`);
+      const spinner = document.getElementById(`spinner-${id}`);
+      const btnText = document.getElementById(`btn-text-${id}`);
+      const errorBox = document.getElementById(`error-${id}`);
+      const resultBox = document.getElementById(`result-${id}`);
+      const formatsBox = document.getElementById(`formats-${id}`);
+
+      btn.disabled = true;
+      spinner.style.display = 'inline-block';
+      btnText.textContent = 'Checking...';
+      errorBox.style.display = 'none';
+      resultBox.style.display = 'none';
+      formatsBox.innerHTML = '';
+
+      try {
+        const res = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not fetch video from this link.');
+
+        const thumb = document.getElementById(`thumb-${id}`);
+        if (data.thumbnail) {
+          thumb.src = data.thumbnail;
+          thumb.style.display = 'block';
+        } else {
+          thumb.style.display = 'none';
+        }
+
+        document.getElementById(`platform-${id}`).textContent = data.platform;
+        document.getElementById(`title-${id}`).textContent = data.title;
+
+        if (!data.formats || data.formats.length === 0) {
+          formatsBox.innerHTML = '<p style="font-size:0.88rem; color:#71717a;">No downloadable streams found for this link.</p>';
+        } else {
+          data.formats.forEach((f, idx) => {
+            const params = new URLSearchParams({
+              url: f.url || '',
+              source_url: f.source_url || '',
+              is_merged: f.is_merged ? 'true' : 'false',
+              height: f.height || 0,
+              title: data.title,
+              referer: f.headers?.Referer || '',
+              user_agent: f.headers?.['User-Agent'] || ''
+            });
+
+            const downloadUrl = `/api/download?${params.toString()}`;
+            const safeName = `${data.title.replace(/[^a-z0-9_\-\s]/gi, '').trim() || 'video'}_${f.quality}.mp4`;
+
+            const row = document.createElement('div');
+            row.className = 'format-row';
+            row.innerHTML = `
+              <div>
+                <strong style="font-size:0.92rem;">${f.quality}</strong>
+                <span style="font-size:0.8rem; color:#71717a; margin-left:6px;">${f.ext.toUpperCase()} &bull; ${f.size}</span>
+              </div>
+              <button type="button" class="dl-action-btn" id="dl-btn-${id}-${idx}">
+                ⬇ Download
+              </button>
+            `;
+            formatsBox.appendChild(row);
+
+            document.getElementById(`dl-btn-${id}-${idx}`).onclick = () => {
+              triggerAnimatedDownload(id, `dl-btn-${id}-${idx}`, downloadUrl, safeName, f.quality);
+            };
+          });
+        }
+
+        resultBox.style.display = 'grid';
+      } catch (err) {
+        if (!navigator.onLine) {
+          showTaskError(id, 'ERR_INTERNET_DISCONNECTED: Internet went offline during request.');
+        } else {
+          showTaskError(id, err.message);
+        }
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        btnText.textContent = 'Get Video';
+      }
+    }
+
+    async function triggerAnimatedDownload(taskId, btnId, downloadUrl, filename, qualityLabel) {
+      if (!navigator.onLine) {
+        showTaskError(taskId, 'ERR_INTERNET_DISCONNECTED: Cannot download while offline.');
+        return;
+      }
+
+      const btn = document.getElementById(btnId);
+      const progressBox = document.getElementById(`progress-${taskId}`);
+      const reportBox = document.getElementById(`report-${taskId}`);
+      const statusText = document.getElementById(`progress-status-${taskId}`);
+      const factText = document.getElementById(`fact-${taskId}`);
+
+      btn.disabled = true;
+      const originalLabel = btn.innerHTML;
+      btn.innerHTML = '⏳ Downloading...';
+      reportBox.style.display = 'none';
+      progressBox.style.display = 'block';
+
+      let factIdx = Math.floor(Math.random() * waitingFacts.length);
+      factText.textContent = waitingFacts[factIdx];
+      const factInterval = setInterval(() => {
+        factIdx = (factIdx + 1) % waitingFacts.length;
+        factText.textContent = waitingFacts[factIdx];
+      }, 4500);
+
+      const startTime = performance.now();
+
+      try {
+        statusText.textContent = 'Merging HD audio + video & transferring...';
+        const response = await fetch(downloadUrl);
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.detail || `Download failed (HTTP ${response.status})`);
+        }
+
+        const blob = await response.blob();
+        const endTime = performance.now();
+        const elapsedMs = endTime - startTime;
+
+        const formattedTime = formatDuration(elapsedMs);
+        const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+        const speedMBps = (blob.size / (1024 * 1024) / (elapsedMs / 1000)).toFixed(2);
+
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(blobUrl);
+
+        progressBox.style.display = 'none';
+        reportBox.innerHTML = `
+          <div class="report-header">
+            <span>✅ Download Report — Saved Successfully</span>
+            <span style="font-size:0.76rem; opacity:0.85;">${qualityLabel}</span>
+          </div>
+          <div class="report-grid">
+            <div class="report-stat">
+              <span class="report-stat-label">Time Taken</span>
+              <span class="report-stat-value">${formattedTime}</span>
+            </div>
+            <div class="report-stat">
+              <span class="report-stat-label">File Size</span>
+              <span class="report-stat-value">${sizeMB} MB</span>
+            </div>
+            <div class="report-stat">
+              <span class="report-stat-label">Avg Speed</span>
+              <span class="report-stat-value">${speedMBps} MB/s</span>
+            </div>
+          </div>
+        `;
+        reportBox.style.display = 'block';
+
+        btn.innerHTML = '✅ Downloaded';
+        setTimeout(() => {
+          btn.innerHTML = originalLabel;
+          btn.disabled = false;
+        }, 3000);
+      } catch (err) {
+        progressBox.style.display = 'none';
+        btn.innerHTML = originalLabel;
+        btn.disabled = false;
+        if (!navigator.onLine) {
+          showTaskError(taskId, 'ERR_INTERNET_DISCONNECTED: Network lost while downloading video.');
+        } else {
+          showTaskError(taskId, err.message);
+        }
+      } finally {
+        clearInterval(factInterval);
+      }
+    }
+
+    addTask();
+  </script>
+</body>
+</html>
