@@ -34,7 +34,7 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding: 20px 16px 40px 16px;
+      padding: 20px 16px 80px 16px;
       -webkit-font-smoothing: antialiased;
     }
 
@@ -298,6 +298,7 @@
       border: 1.5px solid var(--border);
       border-radius: 12px;
       padding: 6px;
+      gap: 6px;
       transition: border-color 0.2s, background-color 0.2s;
     }
 
@@ -318,6 +319,26 @@
       min-width: 0;
     }
 
+    .clear-btn {
+      display: none;
+      background: #e4e4e7;
+      border: none;
+      color: var(--text-main);
+      padding: 7px 11px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+
+    .clear-btn:hover {
+      background: #fecaca;
+      color: var(--danger);
+    }
+
     .paste-btn {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -327,8 +348,8 @@
       font-size: 0.82rem;
       font-weight: 600;
       cursor: pointer;
-      margin-right: 6px;
       font-family: inherit;
+      white-space: nowrap;
     }
 
     .paste-btn:hover { background: #f4f4f5; }
@@ -608,6 +629,158 @@
       color: var(--text-muted);
     }
 
+    /* --- Floating Help Desk Chat Widget --- */
+    .help-fab {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      background: var(--text-main);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      z-index: 999;
+      transition: transform 0.15s;
+    }
+
+    .help-fab:hover { transform: translateY(-2px); }
+
+    .help-panel {
+      display: none;
+      position: fixed;
+      bottom: 78px;
+      right: 22px;
+      width: 350px;
+      max-width: calc(100vw - 32px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.16);
+      z-index: 1000;
+      overflow: hidden;
+      flex-direction: column;
+      animation: slideUp 0.2s ease-out;
+    }
+
+    .help-header {
+      background: var(--text-main);
+      color: #fff;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .help-header h4 { font-size: 0.95rem; font-weight: 700; }
+    .help-header span { font-size: 0.76rem; opacity: 0.8; display: block; }
+
+    .help-close {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .help-messages {
+      padding: 14px;
+      max-height: 230px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--surface-alt);
+    }
+
+    .bot-msg, .user-msg {
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 0.83rem;
+      line-height: 1.45;
+      max-width: 88%;
+    }
+
+    .bot-msg {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      align-self: flex-start;
+    }
+
+    .user-msg {
+      background: var(--text-main);
+      color: #fff;
+      align-self: flex-end;
+    }
+
+    .faq-chips {
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .faq-chip {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text-main);
+    }
+
+    .faq-chip:hover { background: #e4e4e7; }
+
+    .help-form {
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--surface);
+    }
+
+    .help-form input, .help-form textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 0.83rem;
+      outline: none;
+    }
+
+    .help-form input:focus, .help-form textarea:focus {
+      border-color: var(--text-main);
+    }
+
+    .help-submit {
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px;
+      font-weight: 700;
+      font-size: 0.84rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .help-submit:hover { opacity: 0.92; }
+
     @media (max-width: 720px) {
       .hero h1 { font-size: 1.65rem; }
       .split-result { grid-template-columns: 1fr; }
@@ -691,6 +864,40 @@
     ClipSave &bull; Free personal media backup utility for desktop & mobile.
   </footer>
 
+  <!-- Floating Help Desk Button & Panel -->
+  <button type="button" class="help-fab" onclick="toggleHelpDesk()">
+    💬 Help & Doubts
+  </button>
+
+  <div id="helpPanel" class="help-panel">
+    <div class="help-header">
+      <div>
+        <h4>ClipSave Help Desk</h4>
+        <span>Instant answers & user support</span>
+      </div>
+      <button type="button" class="help-close" onclick="toggleHelpDesk()">✕</button>
+    </div>
+
+    <div class="help-messages" id="helpMessages">
+      <div class="bot-msg">
+        👋 Hi! Tap any quick question below or send your doubt/feedback directly to our database.
+      </div>
+    </div>
+
+    <div class="faq-chips">
+      <button type="button" class="faq-chip" onclick="askQuickFaq('How to download HD?')">How to download HD?</button>
+      <button type="button" class="faq-chip" onclick="askQuickFaq('Can I queue multiple links?')">Queue multiple links?</button>
+      <button type="button" class="faq-chip" onclick="askQuickFaq('Why is merging taking a few seconds?')">Why does merging take time?</button>
+      <button type="button" class="faq-chip" onclick="askQuickFaq('Where do files save?')">Where do files save?</button>
+    </div>
+
+    <form class="help-form" onsubmit="submitSupportMessage(event)">
+      <input type="text" id="helpUserName" placeholder="Your name (optional)" />
+      <textarea id="helpUserQuery" rows="2" placeholder="Ask a doubt or report an issue..." required></textarea>
+      <button type="submit" class="help-submit" id="helpSubmitBtn">Send Query</button>
+    </form>
+  </div>
+
   <script>
     let taskCounter = 0;
 
@@ -701,6 +908,13 @@
       "🎬 Did you know? The very first video uploaded to YouTube ('Me at the zoo') was just 19 seconds long at 240p resolution.",
       "🚀 Zero-Disk Streaming: Your video is streamed directly to your browser without cluttering cloud servers."
     ];
+
+    const faqAnswers = {
+      "How to download HD?": "Paste your video link, click 'Get Video', then select 1080p HD or 720p HD. ClipSave automatically merges crisp video + audio into a single MP4.",
+      "Can I queue multiple links?": "Yes! Click '+ Add Another Link (Task)' at the top right of the queue to add as many links as you want and download them side-by-side.",
+      "Why does merging take a few seconds?": "High-definition platforms separate audio and video tracks. Our server combines them with FFmpeg on the fly so your MP4 never plays muted.",
+      "Where do files save?": "Files save directly into your browser's default 'Downloads' folder on both mobile phones and laptops."
+    };
 
     function formatDuration(ms) {
       const totalSeconds = ms / 1000;
@@ -770,8 +984,12 @@
     function handleUrlInput(taskId) {
       const input = document.getElementById(`input-${taskId}`);
       const badge = document.getElementById(`detected-${taskId}`);
-      const info = detectPlatformFromUrl(input.value.trim());
+      const clearBtn = document.getElementById(`clear-btn-${taskId}`);
+      const val = input.value.trim();
 
+      clearBtn.style.display = input.value.length > 0 ? 'inline-block' : 'none';
+
+      const info = detectPlatformFromUrl(val);
       if (info) {
         badge.style.display = 'inline-flex';
         badge.style.color = info.color;
@@ -780,6 +998,23 @@
       } else {
         badge.style.display = 'none';
       }
+    }
+
+    function clearTaskInput(taskId) {
+      const input = document.getElementById(`input-${taskId}`);
+      const badge = document.getElementById(`detected-${taskId}`);
+      const clearBtn = document.getElementById(`clear-btn-${taskId}`);
+      const errorBox = document.getElementById(`error-${taskId}`);
+      const resultBox = document.getElementById(`result-${taskId}`);
+      const reportBox = document.getElementById(`report-${taskId}`);
+
+      input.value = '';
+      badge.style.display = 'none';
+      clearBtn.style.display = 'none';
+      errorBox.style.display = 'none';
+      resultBox.style.display = 'none';
+      if (reportBox) reportBox.style.display = 'none';
+      input.focus();
     }
 
     function addTask() {
@@ -808,6 +1043,7 @@
             onkeydown="if(event.key==='Enter') fetchTaskVideo(${id})"
             autocomplete="off"
           />
+          <button type="button" class="clear-btn" id="clear-btn-${id}" onclick="clearTaskInput(${id})" title="Clear link">✕ Clear</button>
           <button type="button" class="paste-btn" onclick="pasteToTask(${id})">Paste</button>
           <button type="button" class="fetch-btn" id="fetch-btn-${id}" onclick="fetchTaskVideo(${id})">
             <span class="spinner" id="spinner-${id}"></span>
@@ -1061,6 +1297,63 @@
         }
       } finally {
         clearInterval(factInterval);
+      }
+    }
+
+    // --- Help Desk Widget Logic ---
+    function toggleHelpDesk() {
+      const panel = document.getElementById('helpPanel');
+      panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function appendHelpMessage(text, isUser) {
+      const box = document.getElementById('helpMessages');
+      const div = document.createElement('div');
+      div.className = isUser ? 'user-msg' : 'bot-msg';
+      div.textContent = text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function askQuickFaq(question) {
+      appendHelpMessage(question, true);
+      setTimeout(() => {
+        appendHelpMessage(faqAnswers[question] || "Send your query below and we'll look into it!", false);
+      }, 250);
+    }
+
+    async function submitSupportMessage(e) {
+      e.preventDefault();
+      const nameInput = document.getElementById('helpUserName');
+      const queryInput = document.getElementById('helpUserQuery');
+      const submitBtn = document.getElementById('helpSubmitBtn');
+
+      const message = queryInput.value.trim();
+      if (!message) return;
+
+      appendHelpMessage(message, true);
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      try {
+        const res = await fetch('/api/support', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: nameInput.value.trim() || 'Anonymous User',
+            message
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not submit query');
+
+        queryInput.value = '';
+        appendHelpMessage('✅ ' + data.message, false);
+      } catch (err) {
+        appendHelpMessage('⚠️ ' + err.message, false);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Query';
       }
     }
 

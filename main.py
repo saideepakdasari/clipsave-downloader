@@ -67,6 +67,16 @@ def init_db():
                 video_url TEXT
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS support_queries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                user_name TEXT,
+                device_info TEXT,
+                ip_address TEXT,
+                message TEXT NOT NULL
+            )
+        """)
         conn.commit()
 
 def register_unique_visitor(visitor_id: str, ip: str, ua: str) -> bool:
@@ -167,16 +177,54 @@ async def websocket_visitors(websocket: WebSocket, visitor_id: str = Query("anon
 def serve_home():
     return FileResponse("static/index.html")
 
+# --- Help Desk Support Query Endpoint ---
+class SupportQueryRequest(BaseModel):
+    name: str = "Anonymous User"
+    message: str
+
+@app.post("/api/support")
+def submit_support_query(req: SupportQueryRequest, request: Request):
+    clean_msg = req.message.strip()
+    if not clean_msg:
+        raise HTTPException(status_code=400, detail="Please enter your question or feedback.")
+
+    clean_name = req.name.strip()[:40] or "Anonymous User"
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    client_ip = request.client.host if request.client else "Unknown"
+    device_label = parse_device_and_browser(request.headers.get("user-agent", "Unknown"))
+
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            "INSERT INTO support_queries (timestamp, user_name, device_info, ip_address, message) VALUES (?, ?, ?, ?, ?)",
+            (now, clean_name, device_label, client_ip, clean_msg[:500])
+        )
+        conn.commit()
+
+    return {"status": "ok", "message": "Thanks! Your query has been logged for our team."}
+
 # --- Admin Database Viewer (/admin/logs) ---
 @app.get("/admin/logs", response_class=HTMLResponse)
 def view_database_logs():
     with sqlite3.connect(DB_PATH) as conn:
         conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT * FROM activity_logs ORDER BY id DESC LIMIT 200").fetchall()
+        queries = conn.execute("SELECT * FROM support_queries ORDER BY id DESC LIMIT 50").fetchall()
         total_downloads = conn.execute("SELECT COUNT(*) FROM activity_logs WHERE event_type='DOWNLOAD'").fetchone()[0]
         total_unique = conn.execute("SELECT COUNT(*) FROM unique_visitors").fetchone()[0]
         mobile_count = conn.execute("SELECT COUNT(*) FROM unique_visitors WHERE device_browser LIKE 'Mobile%'").fetchone()[0]
         desktop_count = conn.execute("SELECT COUNT(*) FROM unique_visitors WHERE device_browser LIKE 'Laptop%'").fetchone()[0]
+
+    query_rows = ""
+    for q in queries:
+        query_rows += f"""
+        <tr>
+          <td>#{q['id']}</td>
+          <td>{q['timestamp']}</td>
+          <td><strong>{q['user_name']}</strong></td>
+          <td>{q['device_info']}</td>
+          <td>{q['message']}</td>
+        </tr>
+        """
 
     table_rows = ""
     for r in rows:
@@ -198,25 +246,37 @@ def view_database_logs():
     <!DOCTYPE html>
     <html>
     <head>
-      <title>ClipSave — Database Activity Logs</title>
+      <title>ClipSave — Database & Support Logs</title>
       <style>
         body {{ font-family: system-ui, sans-serif; background: #f5f4f0; padding: 24px; color: #18181b; }}
-        .stats {{ display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }}
+        .stats {{ display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }}
         .stat-box {{ background: #fff; padding: 16px 22px; border-radius: 12px; border: 1px solid #e4e4e7; }}
-        table {{ width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }}
+        h3 {{ margin: 24px 0 12px 0; }}
+        table {{ width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.04); margin-bottom: 24px; }}
         th, td {{ padding: 12px 14px; text-align: left; border-bottom: 1px solid #e4e4e7; font-size: 13px; }}
         th {{ background: #18181b; color: #fff; }}
       </style>
     </head>
     <body>
-      <h2>📊 ClipSave Unique Visitors & Activity Logs</h2>
+      <h2>📊 ClipSave Admin Dashboard (SQLite)</h2>
       <div class="stats">
         <div class="stat-box"><strong>Unique Visitors:</strong> {total_unique}</div>
         <div class="stat-box"><strong>📱 Mobile Users:</strong> {mobile_count}</div>
-        <div class="stat-box"><strong>💻 Laptop/Desktop Users:</strong> {desktop_count}</div>
+        <div class="stat-box"><strong>💻 Laptop Users:</strong> {desktop_count}</div>
         <div class="stat-box"><strong>Total Downloads:</strong> {total_downloads}</div>
+        <div class="stat-box"><strong>Support Queries:</strong> {len(queries)}</div>
         <div class="stat-box"><strong>Live Right Now:</strong> {len(set(visitors.active_connections.values()))}</div>
       </div>
+
+      <h3>💬 Help Desk User Queries</h3>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Timestamp</th><th>User Name</th><th>Device & Browser</th><th>Question / Feedback</th></tr>
+        </thead>
+        <tbody>{query_rows or '<tr><td colspan="5">No help desk messages yet.</td></tr>'}</tbody>
+      </table>
+
+      <h3>📥 Activity & Download Logs</h3>
       <table>
         <thead>
           <tr><th>ID</th><th>Timestamp</th><th>Event</th><th>IP Address</th><th>Device & Browser</th><th>Platform</th><th>Video Title</th><th>Quality</th></tr>
