@@ -643,11 +643,11 @@
 
     <div class="header-right">
       <span class="free-badge">100% Free &bull; Zero Ads</span>
-      <div class="live-pill" title="Real-time active users and total visits">
+      <div class="live-pill" title="Real-time active users and unique visits">
         <span class="pulse-dot"></span>
         <span><strong id="visitorCount">1</strong> live</span>
         <span style="color: #d4d4d8;">|</span>
-        <span style="color: var(--text-muted);"><strong id="totalVisitorCount" style="color: var(--text-main);">1</strong> total visits</span>
+        <span style="color: var(--text-muted);"><strong id="totalVisitorCount" style="color: var(--text-main);">1</strong> unique visits</span>
       </div>
     </div>
   </header>
@@ -712,9 +712,19 @@
       return `${mins}m ${secs}s`;
     }
 
+    function getOrCreateVisitorId() {
+      let vid = localStorage.getItem('clipsave_visitor_id');
+      if (!vid) {
+        vid = 'v_' + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
+        localStorage.setItem('clipsave_visitor_id', vid);
+      }
+      return vid;
+    }
+
     function connectVisitorSocket() {
+      const visitorId = getOrCreateVisitorId();
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/visitors`);
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws/visitors?visitor_id=${encodeURIComponent(visitorId)}`);
 
       ws.onmessage = (event) => {
         try {
