@@ -96,6 +96,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
     .free-badge {
@@ -523,7 +524,6 @@
       gap: 6px;
     }
 
-    /* Download Completion Report */
     .report-box {
       display: none;
       margin-top: 12px;
@@ -643,9 +643,11 @@
 
     <div class="header-right">
       <span class="free-badge">100% Free &bull; Zero Ads</span>
-      <div class="live-pill" title="Real-time users active right now">
+      <div class="live-pill" title="Real-time active users and total visits">
         <span class="pulse-dot"></span>
-        <span><strong id="visitorCount">1</strong> live online</span>
+        <span><strong id="visitorCount">1</strong> live</span>
+        <span style="color: #d4d4d8;">|</span>
+        <span style="color: var(--text-muted);"><strong id="totalVisitorCount" style="color: var(--text-main);">1</strong> total visits</span>
       </div>
     </div>
   </header>
@@ -719,6 +721,9 @@
           const data = JSON.parse(event.data);
           if (typeof data.live_visitors === 'number') {
             document.getElementById('visitorCount').textContent = data.live_visitors;
+          }
+          if (typeof data.total_visitors === 'number') {
+            document.getElementById('totalVisitorCount').textContent = data.total_visitors;
           }
         } catch (e) {}
       };

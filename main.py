@@ -16,7 +16,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 DB_PATH = "clipsave.db"
 
-# --- SQLite Database Setup (Zero Setup, Built into Python) ---
+# --- SQLite Database Setup ---
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("""
@@ -48,9 +48,17 @@ def log_event(event_type: str, ip: str, device: str, platform: str = "-", title:
     except Exception:
         pass
 
+def get_total_visits() -> int:
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            row = conn.execute("SELECT COUNT(*) FROM activity_logs WHERE event_type='VISITOR_JOINED'").fetchone()
+            return row[0] if row else 0
+    except Exception:
+        return 0
+
 init_db()
 
-# --- Real-Time Active Visitor Tracker ---
+# --- Real-Time Active & Total Visitor Tracker ---
 class VisitorManager:
     def __init__(self):
         self.active_connections: list[WebSocket] = []
@@ -69,10 +77,14 @@ class VisitorManager:
         await self.broadcast_count()
 
     async def broadcast_count(self):
-        count = len(self.active_connections)
+        live_count = len(self.active_connections)
+        total_count = get_total_visits()
         for connection in list(self.active_connections):
             try:
-                await connection.send_json({"live_visitors": count})
+                await connection.send_json({
+                    "live_visitors": live_count,
+                    "total_visitors": total_count
+                })
             except Exception:
                 pass
 
@@ -87,7 +99,7 @@ async def websocket_visitors(websocket: WebSocket):
     except WebSocketDisconnect:
         await visitors.disconnect(websocket)
 
-# --- Admin Database Viewer (Open http://127.0.0.1:8000/admin/logs) ---
+# --- Admin Database Viewer (/admin/logs) ---
 @app.get("/admin/logs", response_class=HTMLResponse)
 def view_database_logs():
     with sqlite3.connect(DB_PATH) as conn:
@@ -173,7 +185,6 @@ def extract_video_info(req: VideoRequest, request: Request):
             default_headers = info.get("http_headers", {})
             raw_formats = info.get("formats") or []
 
-            # Log link check into SQLite database
             client_ip = request.client.host if request.client else "Unknown"
             user_agent = request.headers.get("user-agent", "Unknown")
             log_event("LINK_SEARCHED", client_ip, user_agent, platform, title, "-", req.url)
@@ -247,7 +258,6 @@ async def proxy_download(
     browser_ua = request.headers.get("user-agent", "Unknown")
     quality_tag = f"{height}p" if height else "Best Quality"
 
-    # Log actual download into SQLite database
     log_event("DOWNLOAD", client_ip, browser_ua, "Media", title, quality_tag, source_url or url)
 
     if is_merged and source_url:
