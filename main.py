@@ -70,7 +70,6 @@ def init_db():
         conn.commit()
 
 def register_unique_visitor(visitor_id: str, ip: str, ua: str) -> bool:
-    """Returns True if this is a brand-new unique browser/device, False if it's a refresh."""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     device_browser = parse_device_and_browser(ua)
     with sqlite3.connect(DB_PATH) as conn:
@@ -121,7 +120,6 @@ init_db()
 # --- Real-Time Active & Unique Visitor Tracker ---
 class VisitorManager:
     def __init__(self):
-        # Maps WebSocket -> visitor_id so multiple tabs from the same browser count as 1 live user
         self.active_connections: dict[WebSocket, str] = {}
 
     async def connect(self, websocket: WebSocket, visitor_id: str):
@@ -142,7 +140,6 @@ class VisitorManager:
         await self.broadcast_count()
 
     async def broadcast_count(self):
-        # Count distinct visitor_ids currently connected
         live_unique = len(set(self.active_connections.values()))
         total_unique = get_total_unique_visitors()
         for connection in list(self.active_connections.keys()):
@@ -164,6 +161,11 @@ async def websocket_visitors(websocket: WebSocket, visitor_id: str = Query("anon
             await websocket.receive_text()
     except WebSocketDisconnect:
         await visitors.disconnect(websocket)
+
+# --- Home Route ---
+@app.get("/")
+def serve_home():
+    return FileResponse("static/index.html")
 
 # --- Admin Database Viewer (/admin/logs) ---
 @app.get("/admin/logs", response_class=HTMLResponse)
@@ -224,3 +226,168 @@ def view_database_logs():
     </body>
     </html>
     """
+
+# --- Video Extraction & High-Quality Merging ---
+class VideoRequest(BaseModel):
+    url: str
+
+@app.post("/api/extract")
+def extract_video_info(req: VideoRequest, request: Request):
+    ydl_opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'skip_download': True,
+        'noplaylist': True,
+    }
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(req.url, download=False)
+
+            if 'entries' in info and info['entries']:
+                info = next((entry for entry in info['entries'] if entry), info)
+
+            title = info.get("title") or info.get("description") or "video"
+            title = title[:80].strip()
+            platform = info.get("extractor_key", "Web")
+            default_headers = info.get("http_headers", {})
+            raw_formats = info.get("formats") or []
+
+            client_ip = request.client.host if request.client else "Unknown"
+            user_agent = request.headers.get("user-agent", "Unknown")
+            log_event("LINK_SEARCHED", client_ip, user_agent, platform, title, "-", req.url)
+
+            formats = []
+            available_heights = set()
+
+            for f in raw_formats:
+                h = f.get('height')
+                vcodec = f.get('vcodec')
+                if h and vcodec and vcodec != 'none':
+                    available_heights.add(h)
+
+            target_resolutions = sorted(list(available_heights), reverse=True)
+            for h in target_resolutions[:3]:
+                formats.append({
+                    "quality": f"{h}p HD" if h >= 720 else f"{h}p MP4",
+                    "ext": "mp4",
+                    "size": "Best Audio + Video",
+                    "is_merged": True,
+                    "height": h,
+                    "source_url": req.url,
+                    "url": "",
+                    "headers": {}
+                })
+
+            if not formats and (raw_formats or info.get('url')):
+                formats.append({
+                    "quality": "Best Available Quality",
+                    "ext": "mp4",
+                    "size": "Auto-Merged MP4",
+                    "is_merged": True,
+                    "height": 0,
+                    "source_url": req.url,
+                    "url": "",
+                    "headers": default_headers
+                })
+
+            if not formats:
+                raise HTTPException(
+                    status_code=400,
+                    detail="No video stream found in this link (it may be an image-only post or private account)."
+                )
+
+            return {
+                "title": title,
+                "thumbnail": info.get("thumbnail", ""),
+                "platform": platform,
+                "formats": formats
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Could not fetch video: {str(e)}")
+
+@app.get("/api/download")
+async def proxy_download(
+        request: Request,
+        background_tasks: BackgroundTasks,
+        url: str = Query(""),
+        source_url: str = Query(""),
+        is_merged: bool = Query(False),
+        height: int = Query(0),
+        title: str = Query("video"),
+        referer: str = Query(""),
+        user_agent: str = Query("")
+):
+    safe_filename = "".join(c for c in title if c.isalnum() or c in (' ', '-', '_')).rstrip() or "video"
+    client_ip = request.client.host if request.client else "Unknown"
+    browser_ua = request.headers.get("user-agent", "Unknown")
+    quality_tag = f"{height}p" if height else "Best Quality"
+
+    log_event("DOWNLOAD", client_ip, browser_ua, "Media", title, quality_tag, source_url or url)
+
+    if is_merged and source_url:
+        temp_dir = tempfile.gettempdir()
+        temp_id = uuid.uuid4().hex
+        output_template = os.path.join(temp_dir, f"{temp_id}.%(ext)s")
+        final_file = os.path.join(temp_dir, f"{temp_id}.mp4")
+
+        format_selector = (
+            f"bestvideo[height<={height}][ext=mp4]+bestaudio[ext=m4a]/"
+            f"bestvideo[height<={height}]+bestaudio/best[height<={height}]/best"
+            if height > 0 else
+            "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio/best"
+        )
+
+        ydl_opts = {
+            'format': format_selector,
+            'merge_output_format': 'mp4',
+            'outtmpl': output_template,
+            'ffmpeg_location': imageio_ffmpeg.get_ffmpeg_exe(),
+            'noplaylist': True,
+            'quiet': True,
+            'no_warnings': True,
+        }
+
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([source_url])
+
+            if not os.path.exists(final_file):
+                raise HTTPException(status_code=500, detail="Failed to merge video and audio.")
+
+            background_tasks.add_task(os.remove, final_file)
+
+            return FileResponse(
+                path=final_file,
+                media_type="video/mp4",
+                filename=f"{safe_filename}_{height}p.mp4" if height else f"{safe_filename}.mp4"
+            )
+        except Exception as e:
+            if os.path.exists(final_file):
+                os.remove(final_file)
+            raise HTTPException(status_code=500, detail=f"Download Error: {str(e)}")
+
+    headers = {}
+    if referer:
+        headers["Referer"] = referer
+    if user_agent:
+        headers["User-Agent"] = user_agent
+
+    async def stream_generator():
+        async with httpx.AsyncClient(follow_redirects=True, timeout=None) as client:
+            async with client.stream("GET", url, headers=headers) as response:
+                if response.status_code >= 400:
+                    raise HTTPException(status_code=response.status_code, detail="CDN rejected stream")
+                async for chunk in response.aiter_bytes(chunk_size=65536):
+                    yield chunk
+
+    return StreamingResponse(
+        stream_generator(),
+        media_type="video/mp4",
+        headers={
+            "Content-Disposition": f'attachment; filename="{safe_filename}.mp4"'
+        }
+    )
